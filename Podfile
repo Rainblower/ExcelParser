@@ -4,8 +4,9 @@
 target 'ExcelParser' do
   # Comment the next line if you don't want to use dynamic frameworks
   use_frameworks!
-  pod 'CoreXLSX'
+
   pod 'CSV.swift'
+  pod 'Alamofire'
 
   # Pods for ExcelParser
 

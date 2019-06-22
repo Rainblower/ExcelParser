@@ -7,21 +7,77 @@
 //
 
 import Cocoa
-import CoreXLSX
+
 import CSV
 
 class MainViewController: NSViewController {
 
+    @IBOutlet var textView: NSTextView!
     
-    
-    @IBOutlet weak var textField: NSTextField!
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        // Do view setup here.
+    @IBAction func selectFile(_ sender: Any) {
         
-        var html = """
+        let dialog = NSOpenPanel()
+        dialog.title                   = "Select .cvs file"
+        dialog.showsResizeIndicator    = true;
+        dialog.showsHiddenFiles        = false;
+        dialog.canChooseDirectories    = true;
+        dialog.canCreateDirectories    = true;
+        dialog.allowsMultipleSelection = false;
+        dialog.allowedFileTypes        = ["csv"];
+        
+        if dialog.runModal() == .OK {
+            if dialog.url != nil {
+                csvToHtml(url: dialog.url!)
+            } else {
+                return
+            }
+        }
+    }
+    
+    func csvToHtml(url: URL) {
+       
+        var printCount = 0
+        var count = 0
+        let stream = InputStream(url: url)
+        let csv = try! CSVReader(stream: stream!)
+        while var row = csv.next() {
+            count += 1
+            
+            if count > 2 && !row[0].contains(";;;;;;;;") {
+                print("\(row)")
+                
+                if row.count > 1 {
+                    row.remove(at: 0)
+                }
+                
+                while row[0].contains(";;") {
+                    row[0] = row[0].replacingOccurrences(of: ";;", with: "; ;")
+                }
+                let rowElements = row[0].split(separator: ";")
+                var secondCount = 0
+                
+                for element in rowElements {
+                    secondCount += 1
+                    
+                    if secondCount > 4 {
+                        printCount += 1
+                        print(">$\(printCount)<")
+                        html = html.replacingOccurrences(of: ">$\(printCount)<", with: ">\(element)<")
+                        print(element)
+                    }
+                    
+                }
+                
+            }
+            
+        }
+        
+        textView.string = html
+    }
+    
+    
+    var html = """
         <table>
-        <colgroup><col></col></colgroup>
         <tbody>
         <tr style="height: 108px;">
         <td class="xl64" style="width: 200px; height: 108px;"><strong>Специальность</strong></td>
@@ -34,7 +90,7 @@ class MainViewController: NSViewController {
         <td class="xl72" style="width: 94px; height: 108px;"><strong>Подано заявлений (внебюджет)</strong></td>
         </tr>
         <tr style="height: 20px;">
-        <td class="xl77" style="padding-top: 1px; padding-right: 1px; padding-left: 1px; color: #0c0c0c; font-size: 15pt; font-family: Bold; vertical-align: middle; border: 1pt solid white; text-align: center; background-color: whitesmoke; height: 20px; width: 1000px;" colspan="8"><strong>Центр медицинской техники и оптики</strong></td>
+        <td class="xl77" style="font-size: 15pt; font-family: Bold; vertical-align: middle; text-align: center;height: 20px; width: 1000px;" colspan="8"><strong>Центр медицинской техники и оптики</strong></td>
         </tr>
         <tr style="height: 18px;">
         <td class="xl65" style="width: 200px; height: 18px;">Медицинская оптика</td>
@@ -106,7 +162,7 @@ class MainViewController: NSViewController {
         <td class="xl72" style="width: 94px; height: 18px; text-align: right;"><strong>$28</strong></td>
         </tr>
         <tr style="height: 20px;">
-        <td class="xl77" style="padding-top: 1px; padding-right: 1px; padding-left: 1px; color: #0c0c0c; font-size: 15pt; font-family: Bold; vertical-align: middle; border: 1pt solid white; text-align: center; background-color: whitesmoke; height: 20px; width: 1000px;" colspan="8"><strong>Центр информационно-коммуникационных технологий</strong></td>
+        <td class="xl77" style="font-size: 15pt; font-family: Bold; vertical-align: middle; text-align: center;vheight: 20px; width: 1000px;" colspan="8"><strong>Центр информационно-коммуникационных технологий</strong></td>
         </tr>
         <tr style="height: 54px;">
         <td class="xl65" style="width: 200px; height: 54px;">Информационные системы и программирование</td>
@@ -166,7 +222,7 @@ class MainViewController: NSViewController {
         <td class="xl72" style="width: 94px; height: 18px; text-align: right;"><strong>$52</strong></td>
         </tr>
         <tr style="height: 20px;">
-        <td class="xl77" style="padding-top: 1px; padding-right: 1px; padding-left: 1px; color: #0c0c0c; font-size: 15pt; font-family: Bold; vertical-align: middle; border: 1pt solid white; text-align: center; background-color: whitesmoke; height: 20px; width: 1000px;" colspan="8"><strong>Центр торгово-экономических компетенций</strong></td>
+        <td class="xl77" style="font-size: 15pt; font-family: Bold; vertical-align: middle; text-align: center;  height: 20px; width: 1000px;" colspan="8"><strong>Центр торгово-экономических компетенций</strong></td>
         </tr>
         <tr style="height: 72px;">
         <td class="xl65" style="width: 200px; height: 72px;">Товароведение и экспертиза качества потребительских товаров</td>
@@ -206,7 +262,7 @@ class MainViewController: NSViewController {
         <td class="xl72" style="width: 94px; height: 18px; text-align: right;"><strong>$68</strong></td>
         </tr>
         <tr style="height: 20px;">
-        <td class="xl77" style="padding-top: 1px; padding-right: 1px; padding-left: 1px; color: #0c0c0c; font-size: 15pt; font-family: Bold; vertical-align: middle; border: 1pt solid white; text-align: center; background-color: whitesmoke; height: 20px; width: 1000px;" colspan="8"><strong>Центр алмазных технологий и геммологии</strong></td>
+        <td class="xl77" style="font-size: 15pt; font-family: Bold; vertical-align: middle; text-align: center;  height: 20px; width: 1000px;" colspan="8"><strong>Центр алмазных технологий и геммологии</strong></td>
         </tr>
         <tr style="height: 36px;">
         <td class="xl65" style="width: 200px; height: 36px;">Огранка алмазов в бриллианты</td>
@@ -246,7 +302,7 @@ class MainViewController: NSViewController {
         <td class="xl72" style="width: 94px; height: 18px; text-align: right;"><strong>$84</strong></td>
         </tr>
         <tr style="height: 20px;">
-        <td class="xl77" style="padding-top: 1px; padding-right: 1px; padding-left: 1px; color: #0c0c0c; font-size: 15pt; font-family: Bold; vertical-align: middle; border: 1pt solid white; text-align: center; background-color: whitesmoke; height: 20px; width: 1000px;" colspan="8"><strong>Центр предпринимательства и развития бизнеса</strong></td>
+        <td class="xl77" style="font-size: 15pt; font-family: Bold; vertical-align: middle; text-align: center; height: 20px; width: 1000px;" colspan="8"><strong>Центр предпринимательства и развития бизнеса</strong></td>
         </tr>
         <tr style="height: 18px;">
         <td class="xl65" style="width: 200px; height: 18px;">Туризм</td>
@@ -276,7 +332,7 @@ class MainViewController: NSViewController {
         <td class="xl72" style="width: 94px; height: 18px; text-align: right;"><strong>$96</strong></td>
         </tr>
         <tr style="height: 20px;">
-        <td class="xl77" style="padding-top: 1px; padding-right: 1px; padding-left: 1px; color: #0c0c0c; font-size: 15pt; font-family: Bold; vertical-align: middle; border: 1pt solid white; text-align: center; background-color: whitesmoke; height: 20px; width: 1000px;" colspan="8"><strong>Центр аудиовизуальных технологий</strong></td>
+        <td class="xl77" style=" font-size: 15pt; font-family: Bold; vertical-align: middle; text-align: center;  height: 20px; width: 1000px;" colspan="8"><strong>Центр аудиовизуальных технологий</strong></td>
         </tr>
         <tr style="height: 36px;">
         <td class="xl65" style="width: 200px; height: 36px;">Аудиовизуальная техника</td>
@@ -336,11 +392,7 @@ class MainViewController: NSViewController {
         <td class="xl72" style="width: 94px; height: 18px; text-align: right;"><strong>$120</strong></td>
         </tr>
         <tr style="height: 18px;">
-        <td class="xl66"  style="width: 332px; background-color: gray; height: 18px; text-align: right;" colspan="4"><strong></strong></td>
-        <td class="xl72" style="width: 10px; background-color: gray; height: 18px; text-align: right;"><strong></strong></td>
-        <td class="xl72" style="width: 79px; background-color: gray; height: 18px; text-align: right;"><strong></strong></td>
-        <td class="xl72" style="width: 77px; background-color: gray; height: 18px; text-align: right;"><strong></strong></td>
-        <td class="xl72" style="width: 94px; background-color: gray; height: 18px; text-align: right;"><strong></strong></td>
+        <td class="xl66"  style="width: 332px; background-color: light-gray; height: 18px; text-align: right;" colspan="8"><strong></strong></td>
         </tr>
         <tr style="height: 36px;">
         <td class="xl66" style="width: 332px; height: 36px; text-align: right;" colspan="4"><strong>&nbsp;Итого 9кл.:</strong></td>
@@ -366,46 +418,4 @@ class MainViewController: NSViewController {
         </tbody>
         </table>
 """
-        
-        
-        let str = Bundle.main.path(forResource: "table1", ofType: "csv")
-        var printCount = 0
-        var count = 0
-        let stream = InputStream(fileAtPath: str!)
-        let csv = try! CSVReader(stream: stream!)
-        while var row = csv.next() {
-            count += 1
-
-            if count > 2 && !row[0].contains(";;;;;;;;") {
-                print("\(row)")
-                
-                if row.count > 1 {
-                    row.remove(at: 0)
-                }
-                
-                while row[0].contains(";;") {
-                    row[0] = row[0].replacingOccurrences(of: ";;", with: "; ;")
-                }
-                let rowElements = row[0].split(separator: ";")
-                var secondCount = 0
-
-                for element in rowElements {
-                    secondCount += 1
-
-                    if secondCount > 4 {
-                        printCount += 1
-                        print(">$\(printCount)<")
-                        html = html.replacingOccurrences(of: ">$\(printCount)<", with: ">\(element)<")
-                        print(element)
-                    }
-
-                }
-
-            }
-
-        }
-        
-        textField.stringValue = html
-    }
-    
 }
