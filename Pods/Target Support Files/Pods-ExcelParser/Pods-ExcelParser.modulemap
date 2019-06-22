@@ -1,0 +1,6 @@
+framework module Pods_ExcelParser {
+  umbrella header "Pods-ExcelParser-umbrella.h"
+
+  export *
+  module * { export * }
+}
