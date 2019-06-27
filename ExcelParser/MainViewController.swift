@@ -9,10 +9,13 @@
 import Cocoa
 
 import CSV
+import Alamofire
+import SwiftyJSON
 
 class MainViewController: NSViewController {
 
     @IBOutlet var textView: NSTextView!
+    @IBOutlet var consoleView: NSTextView!
     
     @IBAction func selectFile(_ sender: Any) {
         
@@ -23,7 +26,7 @@ class MainViewController: NSViewController {
         dialog.canChooseDirectories    = true;
         dialog.canCreateDirectories    = true;
         dialog.allowsMultipleSelection = false;
-        dialog.allowedFileTypes        = ["csv"];
+        dialog.allowedFileTypes        = ["csv","xlsx"];
         
         if dialog.runModal() == .OK {
             if dialog.url != nil {
@@ -44,7 +47,7 @@ class MainViewController: NSViewController {
             count += 1
             
             if count > 2 && !row[0].contains(";;;;;;;;") {
-                print("\(row)")
+                printConsole("\(row)")
                 
                 if row.count > 1 {
                     row.remove(at: 0)
@@ -61,9 +64,10 @@ class MainViewController: NSViewController {
                     
                     if secondCount > 4 {
                         printCount += 1
-                        print(">$\(printCount)<")
+                        
+//                        printConsole(">$\(printCount)<")
                         html = html.replacingOccurrences(of: ">$\(printCount)<", with: ">\(element)<")
-                        print(element)
+//                        printConsole(String(element))
                     }
                     
                 }
@@ -71,8 +75,40 @@ class MainViewController: NSViewController {
             }
             
         }
-        
+        print(html)
         textView.string = html
+        sendData(html: html)
+    }
+    
+    func sendData(html: String) {
+        
+        guard let url = URL(string: "http://www.kp11.ru/api/page_field/update.php") else { return }
+        let params: Parameters = [
+            "id" : "72",
+            "page_text" : html,
+            "page_right_text" : "",
+            "keywords" : "заявление, количество поданных заявлений, подать заявление"
+        ]
+        
+   
+        
+        Alamofire.request(url, method: .post, parameters: params, encoding: JSONEncoding.default)
+            .validate()
+            .responseJSON { (response) in
+                switch response.result {
+                case .success(let value):
+                    let json = JSON(value)
+                    self.printConsole(json.stringValue)
+                case .failure(let error):
+//                    printConsole(error)
+                    print(error)
+                }
+        }
+    }
+    
+    func printConsole(_ message: String) {
+        consoleView.string = consoleView.string + "\n" + message
+        print(message)
     }
     
     

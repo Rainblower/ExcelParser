@@ -7,6 +7,7 @@ target 'ExcelParser' do
 
   pod 'CSV.swift'
   pod 'Alamofire'
+  pod 'SwiftyJSON'
 
   # Pods for ExcelParser
 
