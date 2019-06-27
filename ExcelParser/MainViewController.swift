@@ -100,10 +100,49 @@ class MainViewController: NSViewController {
         } catch {}
         
         textView.string = html
-        sendData(html: html)
+        updatePage(Date())
+        updatePageField(html)
     }
     
-    func sendData(html: String) {
+    func updatePage(_ dateNow: Date) {
+        guard let url = URL(string: "http://www.kp11.ru/api/page/update.php") else { return }
+        
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "dd.MM.yy"
+        
+        let modDateFormatter = DateFormatter()
+        modDateFormatter.dateFormat = "yy-MM-dd HH:mm:ss"
+        
+        let date = dateFormatter.string(from: dateNow)
+        let modDate = modDateFormatter.string(from: dateNow)
+        
+        let params: Parameters = [
+            "id" : "72",
+            "page_type_id" : "14",
+            "title" : "Количество поданных заявлений",
+            "page_h1" : "Количество поданных заявлений на \(date)",
+            "parent" : "65",
+            "url" : "/abiturientu/kolichestvo_podannyh_zayavlenij",
+            "active" : "1",
+            "create_date" : "2015-02-06 00:17:32",
+            "modify_date" : "\(modDate)"
+        ]
+        
+        Alamofire.request(url, method: .post, parameters: params, encoding: JSONEncoding.default)
+            .validate()
+            .responseJSON { (response) in
+                switch response.result {
+                case .success(let value):
+                    let json = JSON(value)
+//                    self.printConsole(json.stringValue)
+                    print(value)
+                case .failure(let error):
+                    print(error)
+                }
+        }
+    }
+    
+    func updatePageField(_ html: String) {
         
         guard let url = URL(string: "http://www.kp11.ru/api/page_field/update.php") else { return }
         let params: Parameters = [
@@ -122,6 +161,7 @@ class MainViewController: NSViewController {
                 case .success(let value):
                     let json = JSON(value)
                     self.printConsole(json.stringValue)
+                    print(value)
                 case .failure(let error):
 //                    printConsole(error)
                     print(error)
