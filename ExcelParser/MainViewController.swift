@@ -11,6 +11,7 @@ import Cocoa
 import CSV
 import Alamofire
 import SwiftyJSON
+import CoreXLSX
 
 class MainViewController: NSViewController {
 
@@ -20,62 +21,84 @@ class MainViewController: NSViewController {
     @IBAction func selectFile(_ sender: Any) {
         
         let dialog = NSOpenPanel()
-        dialog.title                   = "Select .cvs file"
+        dialog.title                   = "Select .xlsx file"
         dialog.showsResizeIndicator    = true;
         dialog.showsHiddenFiles        = false;
         dialog.canChooseDirectories    = true;
         dialog.canCreateDirectories    = true;
         dialog.allowsMultipleSelection = false;
-        dialog.allowedFileTypes        = ["csv","xlsx"];
+        dialog.allowedFileTypes        = ["xlsx"];
         
         if dialog.runModal() == .OK {
             if dialog.url != nil {
-                csvToHtml(url: dialog.url!)
+                xlsxToHtml(url: dialog.url!)
             } else {
                 return
             }
         }
     }
     
-    func csvToHtml(url: URL) {
+    func xlsxToHtml(url: URL) {
        
-        var printCount = 0
+        var collumnCount = 0
+        var rowCount = 0
         var count = 0
-        let stream = InputStream(url: url)
-        let csv = try! CSVReader(stream: stream!)
-        while var row = csv.next() {
-            count += 1
-            
-            if count > 2 && !row[0].contains(";;;;;;;;") {
-                printConsole("\(row)")
+
+        guard let file = XLSXFile(filepath: url) else {
+            fatalError("XLSX file corrupted or does not exist")
+        }
+        
+        do {
+            let path = try file.parseWorksheetPaths()
+            let ws = try file.parseWorksheet(at: path[2])
+            for row in ws.data?.rows ?? [] {
+                rowCount += 1
                 
-                if row.count > 1 {
-                    row.remove(at: 0)
+                if rowCount < 4 {
+                    continue
                 }
                 
-                while row[0].contains(";;") {
-                    row[0] = row[0].replacingOccurrences(of: ";;", with: "; ;")
+                if row.cells.count == 6 {
+                    continue
                 }
-                let rowElements = row[0].split(separator: ";")
-                var secondCount = 0
                 
-                for element in rowElements {
-                    secondCount += 1
-                    
-                    if secondCount > 4 {
-                        printCount += 1
-                        
-//                        printConsole(">$\(printCount)<")
-                        html = html.replacingOccurrences(of: ">$\(printCount)<", with: ">\(element)<")
-//                        printConsole(String(element))
+                if row.cells.count == 8 {
+                    var nilCount = 0
+                    for cell in row.cells {
+                        if cell.value == nil {
+                            nilCount += 1
+                        }
                     }
                     
+                    if nilCount == 8 {
+                        continue
+                    }
                 }
                 
+                for cell in row.cells {
+
+                    if collumnCount < 4 {
+                     collumnCount += 1
+                        continue
+                    }
+                    
+                    if row.cells.count > 8 {
+                        if cell == row.cells[8]{
+                            continue
+                        }
+                    }
+                   
+                    count += 1
+                    let value = String(cell.value ?? "")
+                    html = html.replacingOccurrences(of: ">$\(count)<", with: ">\(value)<")
+                    print(value)
+                }
+                print("Row end")
+                 collumnCount = 0
             }
             
-        }
-        print(html)
+        } catch {}
+        
         textView.string = html
         sendData(html: html)
     }
